@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#113f43">
+<meta name="apple-mobile-web-app-title" content="대방어 원가">
+<meta name="description" content="대방어 매입가, 살수율, 제공 중량과 판매가로 한 접시 원가와 매출총이익을 계산합니다.">
+<title>대방어 원가 계산기</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f5f1;color:#183638;font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.6}header{background:#113f43;color:white;padding:28px 20px 34px}header>div,main{max-width:920px;margin:auto}header small{color:#add8c9;letter-spacing:2px}h1{font-size:28px;margin:6px 0;letter-spacing:-1px}header p{margin:0;color:#d1e4db;font-size:14px}main{padding:20px 16px max(40px,env(safe-area-inset-bottom))}.layout{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}.card{background:white;border:1px solid #dce5df;border-radius:18px;padding:22px}h2{font-size:19px;margin:0 0 18px}label{display:block;margin:16px 0 6px;font-size:14px;font-weight:700}label:first-of-type{margin-top:0}.field{display:flex;align-items:center;border:1px solid #c8d7ce;border-radius:12px;background:#fafcf9;overflow:hidden}.field:focus-within{outline:3px solid #92cbb9}input{width:100%;min-width:0;border:0;background:transparent;font:inherit;font-size:22px;font-weight:650;color:#183e37;padding:12px;outline:none}.unit{white-space:nowrap;padding-right:14px;color:#6d8176;font-size:14px}.hint,.status{font-size:12px;color:#647b70}.hint{margin:5px 0}.status{min-height:20px;margin:10px 0 0}.main-result{background:#e8f4ed;border-radius:14px;padding:20px}.main-result span{display:block;font-size:14px}.main-result strong{font-size:34px;letter-spacing:-1px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.metric{padding:12px 0;border-bottom:1px solid #e2e9e3}.metric span{display:block;font-size:12px;color:#647b70}.metric strong{font-size:23px}.wide{grid-column:1/-1}.profit{color:#11735c}.loss{color:#b2392f}button{font:inherit;min-height:48px;border:1px solid #cbd9cf;background:white;color:#245146;border-radius:12px;padding:10px 14px;cursor:pointer}button:focus-visible{outline:3px solid #92cbb9}button:disabled{opacity:.45;cursor:not-allowed}.primary{width:100%;background:#176453;color:white;border-color:#176453;margin-top:16px;font-weight:700}.error{min-height:23px;color:#b2392f;font-size:14px;margin:12px 0 0}.history{margin-top:18px}.history-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.history-head h2{margin:0}.row{padding:16px 0;border-top:1px solid #e2e9e3}.row p{margin:0 0 8px;font-size:14px;overflow-wrap:anywhere}.row small{display:block;color:#647b70}.actions{display:flex;gap:8px}.actions button{font-size:13px}#history{margin-top:16px}details{margin-top:18px;font-size:13px;color:#587165}summary{cursor:pointer;font-weight:700}.note{font-size:12px;color:#687d74;margin:18px 0 0}@media(max-width:650px){.layout{grid-template-columns:1fr}.card{padding:20px}h1{font-size:26px}main{padding-left:12px;padding-right:12px}}
+</style>
+</head>
+<body>
+<header><div><small>SILLIM · KITCHEN TOOLS</small><h1>대방어 원가 계산기</h1><p>오늘 들어온 방어, 한 접시에 얼마일까요?</p></div></header>
+<main>
+<div class="layout">
+<section class="card">
+<h2>매입과 판매 기준</h2>
+<label for="purchase">kg당 매입가격</label><div class="field"><input id="purchase" type="number" inputmode="decimal" min="0" step="any" value="20000" required><span class="unit">원 / kg</span></div>
+<label for="yield">살수율</label><div class="field"><input id="yield" type="number" inputmode="decimal" min="0" max="100" step="any" value="50" required><span class="unit">%</span></div><p class="hint">원물에서 실제 제공 가능한 순살의 비율입니다.</p>
+<label for="grams">한 접시 제공 중량</label><div class="field"><input id="grams" type="number" inputmode="decimal" min="0" step="any" value="300" required><span class="unit">g</span></div>
+<label for="sale">한 접시 판매가격</label><div class="field"><input id="sale" type="number" inputmode="decimal" min="0" step="any" value="40000" required><span class="unit">원</span></div>
+<p class="hint" style="margin-top:16px">처음에는 예시 금액이 입력되어 있습니다.</p><p id="storage" class="status" role="status"></p>
+</section>
+<section class="card"><h2>한 접시 계산 결과</h2>
+<div aria-live="polite" aria-atomic="true"><div class="main-result"><span>한 접시 순살 원가</span><strong id="cost">—</strong> 원</div>
+<div class="metrics"><div class="metric"><span>순살 1kg 원가</span><strong id="perKg">—</strong> 원</div><div class="metric"><span>원가율</span><strong id="rate">—</strong> %</div><div class="metric wide"><span>한 접시 매출총이익 · 생선 원가 기준</span><strong id="profit" class="profit">—</strong> 원</div></div><p id="error" class="error"></p></div>
+<button id="save" class="primary" type="button">이 계산 저장하기</button><p id="notice" class="status" role="status"></p>
+<p class="note">생선 원가만 계산합니다. 부재료, 밑반찬, 인건비, 임대료, 수수료와 세금은 포함하지 않으므로 실제 순이익과 다릅니다.</p></section>
+</div>
+<section class="card history"><div class="history-head"><h2>저장한 계산</h2><button id="export" type="button">백업 내려받기</button></div><p class="hint">이 브라우저에 최대 50개까지 저장합니다.</p><div id="history"></div></section>
+<details class="card"><summary>계산식과 저장 안내</summary><p>순살 1kg 원가 = kg당 매입가격 ÷ (살수율 ÷ 100)<br>한 접시 원가 = 순살 1kg 원가 × 제공 중량(g) ÷ 1,000<br>원가율 = 한 접시 원가 ÷ 판매가격 × 100<br>매출총이익 = 판매가격 − 한 접시 원가</p><p>계산에는 반올림하지 않은 값을 사용합니다. 표시할 때만 원 단위와 소수점 한 자리(%)로 반올림합니다.</p><p>데이터는 현재 기기의 브라우저에 저장되며 다른 기기와 동기화하지 않습니다. 브라우저 데이터 삭제, 시크릿 모드, 사이트 주소 변경 시 기록이 사라지거나 보이지 않을 수 있습니다. 중요한 기록은 백업을 내려받으세요. 백업은 확인용 JSON 파일이며, 이 버전에는 백업 가져오기 기능이 없습니다.</p><p>아이폰에서는 HTTPS 주소를 Safari로 열어 사용하세요. 공유 → 홈 화면에 추가로 바로가기를 만들 수 있습니다. 사이트를 처음 열거나 새로 불러올 때는 인터넷 연결이 필요합니다.</p></details>
+<details class="card"><summary>계산 검증 테스트</summary><p>정상 계산, 소수점, 적자, 손익분기점, 잘못된 입력을 검증합니다.</p><button id="test" type="button">15개 테스트 실행</button><p id="testResult" class="status" role="status"></p></details>
+</main>
+<script id="calculation">
+'use strict';
+function calculate(v) {
+  const keys = ['purchase', 'yield', 'grams', 'sale'];
+  for (const key of keys) {
+    if (v[key] === '' || v[key] == null || !Number.isFinite(Number(v[key]))) {
+      throw Error('숫자를 모두 입력해 주세요.');
+    }
+  }
+  const [purchase, yieldRate, grams, sale] = keys.map(key => Number(v[key]));
+  if (purchase <= 0 || grams <= 0 || sale <= 0) {
+    throw Error('매입가격, 제공 중량, 판매가격은 0보다 커야 합니다.');
+  }
+  if (yieldRate <= 0 || yieldRate > 100) {
+    throw Error('살수율은 0 초과 100 이하로 입력해 주세요.');
+  }
+  const perKg = purchase / (yieldRate / 100);
+  const cost = perKg * grams / 1000;
+  const rate = cost / sale * 100;
+  const profit = sale - cost;
+  if (![perKg, cost, rate, profit].every(Number.isFinite)) throw Error('입력값이 너무 큽니다.');
+  return { perKg, cost, rate, profit };
+}
+function runTests() {
+  let passed = 0;
+  const base = { purchase: 20000, yield: 50, grams: 300, sale: 40000 };
+  function check(condition, name) {
+    if (!condition) throw Error(name);
+    passed++;
+  }
+  check(JSON.stringify(calculate(base)) === JSON.stringify({ perKg: 40000, cost: 12000, rate: 30, profit: 28000 }), '기준 계산');
+  check(calculate({ ...base, yield: 100 }).cost === 6000, '살수율 100%');
+  check(calculate({ ...base, sale: 10000 }).profit === -2000, '적자 판매');
+  check(calculate({ ...base, sale: 12000 }).rate === 100, '손익분기점');
+  check(Math.abs(calculate({ ...base, yield: 60, grams: 250 }).cost - 8333.333333333334) < 1e-8, '소수점 계산');
+  for (const change of [{yield:0},{yield:101},{yield:-1},{purchase:''},{purchase:-1},{sale:0},{grams:0},{grams:NaN},{sale:Infinity},{purchase:1e308,grams:1e308}]) {
+    let rejected = false;
+    try { calculate({ ...base, ...change }); } catch { rejected = true; }
+    check(rejected, '잘못된 입력 차단: ' + JSON.stringify(change));
+  }
+  return passed;
+}
+</script>
+<script id="application">
+'use strict';
+const $ = id => document.getElementById(id);
+const keys = ['purchase', 'yield', 'grams', 'sale'];
+const currentKey = 'yellowtail-current-v1';
+const historyKey = 'yellowtail-history-v1';
+let records = [];
+const won = value => new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 }).format(value);
+function readValues() { return Object.fromEntries(keys.map(key => [key, $(key).value])); }
+function valid(values) {
+  try { calculate(values); return true; } catch { return false; }
+}
+function persist(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+  catch {
+    $('storage').textContent = '브라우저 저장을 사용할 수 없습니다. 창을 닫기 전에 백업을 내려받으세요.';
+    return false;
+  }
+}
+function load() {
+  try {
+    const current = JSON.parse(localStorage.getItem(currentKey) || 'null');
+    if (current && keys.every(key => typeof current[key] === 'string' || typeof current[key] === 'number')) {
+      keys.forEach(key => $(key).value = current[key]);
+    }
+    const list = JSON.parse(localStorage.getItem(historyKey) || '[]');
+    if (Array.isArray(list)) records = list.filter(record => record && typeof record.id === 'string' && typeof record.date === 'string' && record.values && valid(record.values)).slice(0, 50);
+  } catch { $('notice').textContent = '저장 데이터를 읽지 못했습니다. 새 계산을 시작합니다.'; }
+}
+function render() {
+  let result;
+  try {
+    result = calculate(readValues());
+    $('error').textContent = '';
+    $('save').disabled = false;
+  } catch (error) {
+    $('error').textContent = error.message;
+    ['cost', 'perKg', 'rate', 'profit'].forEach(key => $(key).textContent = '—');
+    $('save').disabled = true;
+    return;
+  }
+  $('cost').textContent = won(result.cost);
+  $('perKg').textContent = won(result.perKg);
+  $('rate').textContent = result.rate.toLocaleString('ko-KR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  $('profit').textContent = won(result.profit);
+  $('profit').className = result.profit < 0 ? 'loss' : 'profit';
+}
+function renderHistory() {
+  $('history').replaceChildren();
+  if (!records.length) {
+    const empty = document.createElement('p');
+    empty.className = 'hint'; empty.textContent = '아직 저장한 계산이 없습니다.';
+    $('history').append(empty); return;
+  }
+  records.forEach(record => {
+    const result = calculate(record.values);
+    const row = document.createElement('div'); row.className = 'row';
+    const date = new Date(record.date);
+    const title = document.createElement('p');
+    title.textContent = Number.isNaN(date.getTime()) ? '저장한 계산' : date.toLocaleString('ko-KR');
+    const description = document.createElement('small');
+    description.textContent = '매입 ' + won(record.values.purchase) + '원/kg · 살수율 ' + record.values.yield + '% · ' + record.values.grams + 'g · 판매 ' + won(record.values.sale) + '원';
+    title.append(description);
+    const summary = document.createElement('p');
+    summary.textContent = '원가 ' + won(result.cost) + '원 · 원가율 ' + result.rate.toFixed(1) + '% · 매출총이익 ' + won(result.profit) + '원';
+    const actions = document.createElement('div'); actions.className = 'actions';
+    const restore = document.createElement('button'); restore.textContent = '불러오기';
+    restore.onclick = () => {
+      keys.forEach(key => $(key).value = record.values[key]);
+      render(); persist(currentKey, readValues());
+      $('notice').textContent = '저장한 계산을 불러왔습니다.'; $('purchase').focus();
+    };
+    const remove = document.createElement('button'); remove.textContent = '삭제';
+    remove.onclick = () => {
+      if (!confirm('이 계산 기록을 삭제할까요?')) return;
+      records = records.filter(item => item.id !== record.id);
+      const saved = persist(historyKey, records); renderHistory();
+      $('notice').textContent = saved ? '기록을 삭제했습니다.' : '현재 화면에서 삭제했습니다. 브라우저 저장에는 반영하지 못했습니다.';
+    };
+    actions.append(restore, remove); row.append(title, summary, actions); $('history').append(row);
+  });
+}
+keys.forEach(key => $(key).addEventListener('input', () => {
+  render();
+  if (persist(currentKey, readValues())) $('storage').textContent = '최근 입력값이 이 브라우저에 자동 저장되었습니다.';
+  $('notice').textContent = '';
+}));
+$('save').onclick = () => {
+  const values = readValues(); if (!valid(values)) return;
+  if (records.length >= 50) { $('notice').textContent = '50개가 가득 찼습니다. 백업 후 이전 기록을 삭제해 주세요.'; return; }
+  records.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2), date: new Date().toISOString(), values });
+  const saved = persist(historyKey, records); renderHistory();
+  $('notice').textContent = saved ? '계산을 저장했습니다.' : '임시로 보관했습니다. 창을 닫기 전에 백업을 내려받으세요.';
+};
+$('export').onclick = () => {
+  const backup = { version: 1, exportedAt: new Date().toISOString(), current: readValues(), records };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob); const link = document.createElement('a');
+  link.href = url; link.download = '대방어-원가-백업-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.append(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  $('notice').textContent = '백업 다운로드를 요청했습니다. 다운로드 폴더를 확인하세요.';
+};
+$('test').onclick = () => {
+  try { $('testResult').textContent = runTests() + ' / 15개 테스트 통과'; }
+  catch (error) { $('testResult').textContent = '테스트 실패: ' + error.message; }
+};
+load(); render(); renderHistory();
+if (persist(currentKey, readValues())) $('storage').textContent = '입력값은 이 브라우저에 자동 저장됩니다.';
+</script>
+</body>
+</html>
